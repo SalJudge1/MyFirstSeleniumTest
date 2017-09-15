@@ -2,14 +2,23 @@ package com.practice.webdriver;
 
 
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.support.ui.ExpectedCondition;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
+
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.concurrent.TimeUnit;
 import static java.lang.Thread.sleep;
+import static org.openqa.selenium.By.className;
 
 
 /*
@@ -21,6 +30,8 @@ import static java.lang.Thread.sleep;
 public class MyFirstTest {
 
     private WebDriver driver;
+    private static final String USER_ID = "AnyUserName";
+    private static final String PASSWD = "pass1234";
 
     @Before
     public void startWebDriver() {
@@ -32,9 +43,10 @@ public class MyFirstTest {
         driver.get("http://www.usagym.org");
 
 
-        // Wait 10 seconds for page to load, then Click the member login
-        driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
-        WebElement element = driver.findElement(By.className("memberLogin"));
+        /*   Explicit wait ...
+        *   Wait for the 'memberLogin' element to be present. If not present within timeout of 5 seconds, test will fail.
+        */
+        WebElement element = (new WebDriverWait(driver, 5)).until(ExpectedConditions.presenceOfElementLocated(className("memberLogin")));
         element.click();
     }
     @Test
@@ -45,32 +57,34 @@ public class MyFirstTest {
         Verify the login fails & notifies the user.
          */
             WebElement loginModal = driver.findElement(By.id("loginPopUp"));
-            WebElement userTxt = loginModal.findElement(By.name("user"));
+            WebElement userTxt = loginModal.findElement(By.cssSelector("input[name=user]"));
             WebElement passTxt = loginModal.findElement(By.name("pass"));
-            userTxt.sendKeys("AnyUserName");
-            passTxt.sendKeys("pass1234");
+            userTxt.sendKeys(USER_ID);
+            passTxt.sendKeys(PASSWD);
 
-            // Use xpath (from the login window) to find the Login button
-            WebElement lognBtn = loginModal.findElement(By.xpath("//div[@class='ui-dialog-buttonset']/descendant::span[text()='Login']"));
-            lognBtn.click();
 
-            // Hold the window a few seconds so that we can see the Permission Denied message
-            try {
-                sleep(5000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
 
-            // Verify the modal is Permission Denied Modal displays and just print its message to sysout.
-            WebElement loginMsg = driver.findElement(By.id("ui-dialog-title-flashContainer"));
+        //  Using CssSelector to find login Button
+          WebElement lognBtn =  driver.findElement(By.cssSelector("body > div.ui-dialog.ui-widget.ui-widget-content.ui-corner-all.ui-draggable > div.ui-dialog-buttonpane.ui-widget-content.ui-helper-clearfix > div > button:nth-child(2)"));
+          lognBtn.click();
+
+
+
+
+
+
+            // Explict wait for 'Permission Denied' Modal.  Then print the message to sysout.
+            WebDriverWait wait = (new WebDriverWait(driver, 5));
+            WebElement loginMsg = wait.until(ExpectedConditions.presenceOfElementLocated(By.id("ui-dialog-title-flashContainer")));
+
             System.out.println(loginMsg.getText());
         }
 
         @After
-                public void closeUp(){
+        public void closeUp(){
         // Close current window and any other windows.
-        driver.close();
-        driver.quit();
+            driver.close();
+            driver.quit();
     }
 
 }
